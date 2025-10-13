@@ -670,23 +670,6 @@ export default function HomePage() {
             </span>
           </div>
         </div>
-
-        {/* Scroll Indicator - Hidden on mobile */}
-        <div
-          style={{
-            position: "fixed",
-            bottom: "30px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            animation: "bounce 2s infinite",
-            zIndex: 1000,
-            display: window.innerWidth < 768 ? "none" : "block",
-          }}
-        >
-          <div style={{ fontSize: "2rem", color: "rgba(255, 216, 155, 0.6)" }}>
-            ↓
-          </div>
-        </div>
       </div>
     </div>
   );
