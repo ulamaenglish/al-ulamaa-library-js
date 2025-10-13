@@ -32,14 +32,14 @@ export default function ImamKhomeiniHadithPage() {
     "Four Level Of Spiritual Covering",
     "How To Achieve Presence Of Heart",
     "Mystic Reality Of The Prayer Place Is The Inner Place",
-    "Prayer Is Accepted Depending On Presence Of Heart",
+    "Prayer-Is-Accepted-Depending-On-Presence-Of-Heart",
     "Strive To Achieve Presence Of Heart",
     "The Mysteries Of Prayer Times",
     "The Path Of Purification Of The Heart",
     "The Reality Of Adhan And Iqamah",
     "Three Level Of Knowing The Place Of Prayer",
     "Three Level Of Purification",
-    "What Is The Inner Reality Of Wudu",
+    "What-Is-The-Inner-Reality-Of-Wudu",
     "Wudu And Prophet Adam",
   ];
 
