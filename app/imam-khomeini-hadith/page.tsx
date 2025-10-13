@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Particles from "@/components/Particles";
-import { saveQuote, isQuoteSaved, addNote, addToHistory } from "@/lib/database";
+import { saveQuote, addNote, addToHistory } from "@/lib/database";
 
 export default function ImamKhomeiniHadithPage() {
   const router = useRouter();

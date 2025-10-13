@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Particles from "@/components/Particles";
@@ -8,7 +7,6 @@ import {
   saveQuote,
   deleteQuote,
   getSavedQuotes,
-  isQuoteSaved,
   addNote,
   getNotes,
   deleteNote,
