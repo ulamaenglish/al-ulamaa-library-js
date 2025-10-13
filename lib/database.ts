@@ -13,7 +13,7 @@ export async function registerUser(
     // Check if username already exists in profiles
     const { data: existingProfile, error: checkError } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, email")
       .eq("username", username)
       .single();
 
@@ -24,7 +24,26 @@ export async function registerUser(
 
     if (existingProfile) {
       console.log("⚠️ Username already exists");
-      return { success: false, message: "Username already exists" };
+      return {
+        success: false,
+        message: "Username already taken. Please choose another one.",
+      };
+    }
+
+    // Check if email already exists in profiles
+    const { data: existingEmail } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("email", email)
+      .single();
+
+    if (existingEmail) {
+      console.log("⚠️ Email already registered");
+      return {
+        success: false,
+        message:
+          "This email is already registered. Please login instead or use a different email.",
+      };
     }
 
     console.log("🔵 Signing up user with Supabase Auth...");
@@ -43,6 +62,23 @@ export async function registerUser(
 
     if (signUpError) {
       console.error("❌ Sign up error:", signUpError);
+
+      // Check for specific Supabase Auth errors
+      if (signUpError.message.includes("already registered")) {
+        return {
+          success: false,
+          message: "This email is already registered. Please login instead.",
+        };
+      }
+
+      if (signUpError.message.includes("Password")) {
+        return {
+          success: false,
+          message:
+            "Password is too weak. Please use a stronger password (at least 6 characters).",
+        };
+      }
+
       return { success: false, message: signUpError.message };
     }
 
@@ -97,8 +133,7 @@ export async function registerUser(
     console.log("✅ Profile created successfully:", profileData);
     return {
       success: true,
-      message:
-        "Account created successfully! Please check your email to confirm your account.",
+      message: "Account created successfully!",
     };
   } catch (error) {
     console.error("❌ Registration catch error:", error);
@@ -401,6 +436,9 @@ export async function addToHistory(username: string, quoteTitle: string) {
     console.error("Add to history error:", error);
   }
 }
+
+// Alias for backwards compatibility
+export const addToReadingHistory = addToHistory;
 
 // Get reading history
 export async function getReadingHistory(username: string, limit: number = 10) {
