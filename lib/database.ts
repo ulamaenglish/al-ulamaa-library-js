@@ -1,5 +1,7 @@
 import { supabase } from "./supabase";
 
+// ==================== EXISTING AUTH FUNCTIONS ====================
+
 // Register a new user using Supabase Auth
 export async function registerUser(
   username: string,
@@ -89,12 +91,6 @@ export async function registerUser(
 
     console.log("✅ User created in auth:", authData.user.id);
     console.log("🔵 Creating profile...");
-    console.log("🔵 Profile data:", {
-      id: authData.user.id,
-      username,
-      email,
-      full_name: fullName,
-    });
 
     // Create profile (with email stored for easy login)
     const { data: profileData, error: profileError } = await supabase
@@ -112,16 +108,6 @@ export async function registerUser(
 
     if (profileError) {
       console.error("❌ Profile creation error:", profileError);
-      console.error("❌ Error code:", profileError.code);
-      console.error("❌ Error message:", profileError.message);
-      console.error("❌ Error details:", profileError.details);
-      console.error("❌ Error hint:", profileError.hint);
-      console.error(
-        "❌ Full error object:",
-        JSON.stringify(profileError, null, 2)
-      );
-
-      // Return more descriptive error message
       return {
         success: false,
         message: `Error creating profile: ${
@@ -137,8 +123,6 @@ export async function registerUser(
     };
   } catch (error) {
     console.error("❌ Registration catch error:", error);
-    console.error("❌ Error type:", typeof error);
-    console.error("❌ Error details:", JSON.stringify(error, null, 2));
     return { success: false, message: "Error creating account" };
   }
 }
@@ -161,7 +145,6 @@ export async function loginUser(username: string, password: string) {
     }
 
     console.log("🔵 Profile found, email:", profile.email);
-    console.log("🔵 Attempting sign in...");
 
     // Sign in with email and password
     const { data: signInData, error: signInError } =
@@ -173,7 +156,6 @@ export async function loginUser(username: string, password: string) {
     if (signInError) {
       console.error("❌ Sign in error:", signInError);
 
-      // Check if it's an email not confirmed error
       if (signInError.message.includes("Email not confirmed")) {
         return {
           success: false,
@@ -201,7 +183,8 @@ export async function loginUser(username: string, password: string) {
   }
 }
 
-// Save a quote
+// ==================== QUOTES (EXISTING) ====================
+
 export async function saveQuote(
   username: string,
   quoteTitle: string,
@@ -244,7 +227,6 @@ export async function saveQuote(
   }
 }
 
-// Get saved quotes
 export async function getSavedQuotes(username: string) {
   try {
     const {
@@ -278,7 +260,6 @@ export async function getSavedQuotes(username: string) {
   }
 }
 
-// Delete a quote
 export async function deleteQuote(quoteId: number, username: string) {
   try {
     const {
@@ -307,7 +288,8 @@ export async function deleteQuote(quoteId: number, username: string) {
   }
 }
 
-// Add a note
+// ==================== NOTES (EXISTING) ====================
+
 export async function addNote(
   username: string,
   quoteTitle: string,
@@ -347,7 +329,6 @@ export async function addNote(
   }
 }
 
-// Get notes
 export async function getNotes(username: string, quoteTitle?: string) {
   try {
     const {
@@ -385,7 +366,6 @@ export async function getNotes(username: string, quoteTitle?: string) {
   }
 }
 
-// Delete a note
 export async function deleteNote(noteId: number, username: string) {
   try {
     const {
@@ -414,7 +394,8 @@ export async function deleteNote(noteId: number, username: string) {
   }
 }
 
-// Add to reading history
+// ==================== READING HISTORY (EXISTING) ====================
+
 export async function addToHistory(username: string, quoteTitle: string) {
   try {
     const {
@@ -437,10 +418,8 @@ export async function addToHistory(username: string, quoteTitle: string) {
   }
 }
 
-// Alias for backwards compatibility
 export const addToReadingHistory = addToHistory;
 
-// Get reading history
 export async function getReadingHistory(username: string, limit: number = 10) {
   try {
     const {
@@ -480,7 +459,6 @@ export async function getReadingHistory(username: string, limit: number = 10) {
   }
 }
 
-// Get user stats
 export async function getUserStats(username: string) {
   try {
     const {
@@ -492,23 +470,33 @@ export async function getUserStats(username: string) {
         saved_quotes: 0,
         notes: 0,
         quotes_read: 0,
+        // NEW: Ziyarat stats
+        current_streak_days: 0,
+        total_listening_time_seconds: 0,
+        total_ziyarat_completed: 0,
       };
     }
 
-    const [savedQuotesResult, notesResult, historyResult] = await Promise.all([
-      supabase
-        .from("saved_quotes")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id),
-      supabase
-        .from("user_notes")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id),
-      supabase
-        .from("reading_history")
-        .select("quote_title")
-        .eq("user_id", user.id),
-    ]);
+    const [savedQuotesResult, notesResult, historyResult, listeningStats] =
+      await Promise.all([
+        supabase
+          .from("saved_quotes")
+          .select("id", { count: "exact" })
+          .eq("user_id", user.id),
+        supabase
+          .from("user_notes")
+          .select("id", { count: "exact" })
+          .eq("user_id", user.id),
+        supabase
+          .from("reading_history")
+          .select("quote_title")
+          .eq("user_id", user.id),
+        supabase
+          .from("user_listening_stats")
+          .select("*")
+          .eq("user_id", user.id)
+          .single(),
+      ]);
 
     const uniqueQuotes = new Set(
       historyResult.data?.map((item) => item.quote_title) || []
@@ -518,6 +506,12 @@ export async function getUserStats(username: string) {
       saved_quotes: savedQuotesResult.count || 0,
       notes: notesResult.count || 0,
       quotes_read: uniqueQuotes.size,
+      // NEW: Ziyarat stats
+      current_streak_days: listeningStats.data?.current_streak_days || 0,
+      total_listening_time_seconds:
+        listeningStats.data?.total_listening_time_seconds || 0,
+      total_ziyarat_completed:
+        listeningStats.data?.total_ziyarat_completed || 0,
     };
   } catch (error) {
     console.error("Get stats error:", error);
@@ -525,6 +519,424 @@ export async function getUserStats(username: string) {
       saved_quotes: 0,
       notes: 0,
       quotes_read: 0,
+      current_streak_days: 0,
+      total_listening_time_seconds: 0,
+      total_ziyarat_completed: 0,
     };
+  }
+}
+
+// ==================== NEW: ZIYARAT FAVORITES ====================
+
+export async function addToFavorites(username: string, ziyaratSlug: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, message: "Please login first" };
+    }
+
+    const { data, error } = await supabase
+      .from("ziyarat_favorites")
+      .insert([{ user_id: user.id, username, ziyarat_slug: ziyaratSlug }])
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        return { success: false, message: "Already in favorites" };
+      }
+      console.error("Add favorite error:", error);
+      return { success: false, message: "Error adding to favorites" };
+    }
+
+    return { success: true, message: "Added to favorites!" };
+  } catch (error) {
+    console.error("Add favorite error:", error);
+    return { success: false, message: "Error adding to favorites" };
+  }
+}
+
+export async function removeFromFavorites(
+  username: string,
+  ziyaratSlug: string
+) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, message: "Please login first" };
+    }
+
+    const { error } = await supabase
+      .from("ziyarat_favorites")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("ziyarat_slug", ziyaratSlug);
+
+    if (error) {
+      console.error("Remove favorite error:", error);
+      return { success: false, message: "Error removing from favorites" };
+    }
+
+    return { success: true, message: "Removed from favorites" };
+  } catch (error) {
+    console.error("Remove favorite error:", error);
+    return { success: false, message: "Error removing from favorites" };
+  }
+}
+
+export async function getFavorites(username: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("ziyarat_favorites")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("favorited_at", { ascending: false });
+
+    if (error) {
+      console.error("Get favorites error:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Get favorites error:", error);
+    return [];
+  }
+}
+
+export async function isFavorite(username: string, ziyaratSlug: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return false;
+    }
+
+    const { data } = await supabase
+      .from("ziyarat_favorites")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("ziyarat_slug", ziyaratSlug)
+      .single();
+
+    return !!data;
+  } catch (error) {
+    return false;
+  }
+}
+
+// ==================== NEW: LISTENING HISTORY ====================
+
+export async function addListeningHistory(
+  username: string,
+  ziyaratSlug: string,
+  durationSeconds: number,
+  completed: boolean
+) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return;
+    }
+
+    await supabase.from("ziyarat_listening_history").insert([
+      {
+        user_id: user.id,
+        username,
+        ziyarat_slug: ziyaratSlug,
+        duration_seconds: durationSeconds,
+        completed,
+      },
+    ]);
+
+    // Update user stats
+    await updateListeningStats(user.id, username, durationSeconds, completed);
+  } catch (error) {
+    console.error("Add listening history error:", error);
+  }
+}
+
+export async function getListeningHistory(username: string, limit = 10) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("ziyarat_listening_history")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("listened_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("Get listening history error:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Get listening history error:", error);
+    return [];
+  }
+}
+
+// ==================== NEW: LISTENING STATS ====================
+
+async function updateListeningStats(
+  userId: string,
+  username: string,
+  durationSeconds: number,
+  completed: boolean
+) {
+  try {
+    const { data: currentStats } = await supabase
+      .from("user_listening_stats")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    const today = new Date().toISOString().split("T")[0];
+
+    if (!currentStats) {
+      // First time - create new record
+      await supabase.from("user_listening_stats").insert([
+        {
+          user_id: userId,
+          username,
+          total_listening_time_seconds: durationSeconds,
+          current_streak_days: 1,
+          longest_streak_days: 1,
+          last_listened_date: today,
+          total_ziyarat_completed: completed ? 1 : 0,
+        },
+      ]);
+    } else {
+      // Update existing record
+      const lastDate = currentStats.last_listened_date;
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+      let newStreak = currentStats.current_streak_days;
+
+      if (lastDate === today) {
+        // Same day - no streak change
+        newStreak = currentStats.current_streak_days;
+      } else if (lastDate === yesterdayStr) {
+        // Consecutive day - increment streak
+        newStreak = currentStats.current_streak_days + 1;
+      } else {
+        // Streak broken - reset to 1
+        newStreak = 1;
+      }
+
+      const longestStreak = Math.max(
+        newStreak,
+        currentStats.longest_streak_days
+      );
+
+      await supabase
+        .from("user_listening_stats")
+        .update({
+          total_listening_time_seconds:
+            currentStats.total_listening_time_seconds + durationSeconds,
+          current_streak_days: newStreak,
+          longest_streak_days: longestStreak,
+          last_listened_date: today,
+          total_ziyarat_completed: completed
+            ? currentStats.total_ziyarat_completed + 1
+            : currentStats.total_ziyarat_completed,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+    }
+
+    // Check for badges
+    await checkAndAwardBadges(userId, username);
+  } catch (error) {
+    console.error("Update listening stats error:", error);
+  }
+}
+
+// ==================== NEW: BADGES ====================
+
+async function checkAndAwardBadges(userId: string, username: string) {
+  try {
+    const { data: stats } = await supabase
+      .from("user_listening_stats")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (!stats) return;
+
+    const badges = [];
+
+    // Badge: First Listen
+    if (stats.total_ziyarat_completed >= 1) {
+      badges.push({ type: "first_listen", name: "First Steps" });
+    }
+
+    // Badge: 10 Ziyarat
+    if (stats.total_ziyarat_completed >= 10) {
+      badges.push({ type: "ten_ziyarat", name: "Devoted Listener" });
+    }
+
+    // Badge: 50 Ziyarat
+    if (stats.total_ziyarat_completed >= 50) {
+      badges.push({ type: "fifty_ziyarat", name: "Spiritual Seeker" });
+    }
+
+    // Badge: 7 Day Streak
+    if (stats.current_streak_days >= 7) {
+      badges.push({ type: "seven_day_streak", name: "Week Warrior" });
+    }
+
+    // Badge: 30 Day Streak
+    if (stats.current_streak_days >= 30) {
+      badges.push({ type: "thirty_day_streak", name: "Month Master" });
+    }
+
+    // Badge: 1 Hour Total Listening
+    if (stats.total_listening_time_seconds >= 3600) {
+      badges.push({ type: "one_hour", name: "Hour of Remembrance" });
+    }
+
+    // Badge: 10 Hours Total Listening
+    if (stats.total_listening_time_seconds >= 36000) {
+      badges.push({ type: "ten_hours", name: "Dedicated Soul" });
+    }
+
+    // Insert badges (will ignore duplicates due to UNIQUE constraint)
+    for (const badge of badges) {
+      await supabase.from("user_badges").insert([
+        {
+          user_id: userId,
+          username,
+          badge_type: badge.type,
+          badge_name: badge.name,
+        },
+      ]);
+    }
+  } catch (error) {
+    console.error("Check badges error:", error);
+  }
+}
+
+export async function getUserBadges(username: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("user_badges")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("earned_at", { ascending: false });
+
+    if (error) {
+      console.error("Get badges error:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Get badges error:", error);
+    return [];
+  }
+}
+
+// ==================== NEW: MONTHLY REPORT ====================
+
+export async function getMonthlyListeningReport(username: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return null;
+    }
+
+    // Get current month's data
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const { data: monthHistory, error } = await supabase
+      .from("ziyarat_listening_history")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("listened_at", firstDayOfMonth.toISOString())
+      .lte("listened_at", lastDayOfMonth.toISOString());
+
+    if (error) {
+      console.error("Get monthly report error:", error);
+      return null;
+    }
+
+    // Calculate stats
+    const totalListens = monthHistory?.length || 0;
+    const totalTime =
+      monthHistory?.reduce(
+        (sum, item) => sum + (item.duration_seconds || 0),
+        0
+      ) || 0;
+    const completedListens =
+      monthHistory?.filter((item) => item.completed).length || 0;
+
+    // Count by ziyarat
+    const ziyaratCounts: { [key: string]: number } = {};
+    monthHistory?.forEach((item) => {
+      ziyaratCounts[item.ziyarat_slug] =
+        (ziyaratCounts[item.ziyarat_slug] || 0) + 1;
+    });
+
+    // Find most listened
+    const mostListened = Object.entries(ziyaratCounts).sort(
+      ([, a], [, b]) => b - a
+    )[0];
+
+    return {
+      month: now.toLocaleString("default", { month: "long", year: "numeric" }),
+      totalListens,
+      totalTime,
+      completedListens,
+      mostListenedZiyarat: mostListened ? mostListened[0] : null,
+      mostListenedCount: mostListened ? mostListened[1] : 0,
+      ziyaratCounts,
+    };
+  } catch (error) {
+    console.error("Get monthly report error:", error);
+    return null;
   }
 }

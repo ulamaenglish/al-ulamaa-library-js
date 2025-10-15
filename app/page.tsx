@@ -17,6 +17,12 @@ export default function HomePage() {
 
   const topics = [
     {
+      title: "All Ziyarat",
+      icon: "🕋",
+      desc: "Sacred salutations to the Ahlul Bayt",
+      path: "/ziyarat",
+    },
+    {
       title: "Shahid Mutahhari Sayings",
       icon: "💎",
       desc: "Luminous pearls of divine wisdom",
@@ -308,6 +314,86 @@ export default function HomePage() {
             padding: "0 10px",
           }}
         >
+          {/* NEW: All Ziyarat Featured Card */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "20px",
+              padding: "clamp(25px, 5vw, 40px)",
+              textAlign: "center",
+              minHeight: "auto",
+              transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              cursor: "pointer",
+              position: "relative",
+              overflow: "hidden",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-10px) scale(1.02)";
+              e.currentTarget.style.boxShadow =
+                "0 20px 60px rgba(0, 0, 0, 0.5)";
+              e.currentTarget.style.borderColor = "rgba(255, 216, 155, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0) scale(1)";
+              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+            }}
+            onClick={() => router.push("/ziyarat")}
+          >
+            <div
+              style={{
+                fontSize: "clamp(3rem, 10vw, 5rem)",
+                marginBottom: "clamp(15px, 4vw, 25px)",
+                filter: "drop-shadow(0 0 20px rgba(255, 216, 155, 0.6))",
+              }}
+            >
+              🕋
+            </div>
+            <h3
+              style={{
+                color: "white",
+                fontSize: "clamp(1.5rem, 4vw, 2.3rem)",
+                marginBottom: "clamp(10px, 3vw, 20px)",
+                fontWeight: "600",
+                fontFamily: "'Lora', serif",
+              }}
+            >
+              All Ziyarat
+            </h3>
+            <p
+              style={{
+                color: "#d0d0d0",
+                fontSize: "clamp(0.95rem, 2.5vw, 1.15rem)",
+                lineHeight: "1.7",
+                marginBottom: "clamp(20px, 4vw, 35px)",
+              }}
+            >
+              Sacred visitations and salutations to the Holy Prophet and Ahlul
+              Bayt
+              <br />
+              <span style={{ color: "#ffd89b", fontWeight: "600" }}>
+                Including Ziyarat Ashura, Waritha, and more
+              </span>
+            </p>
+            <button
+              style={{
+                padding: "clamp(10px, 2vw, 12px) clamp(20px, 4vw, 30px)",
+                background: "linear-gradient(135deg, #19547b 0%, #ffd89b 100%)",
+                border: "none",
+                borderRadius: "25px",
+                color: "white",
+                fontWeight: "600",
+                fontSize: "clamp(0.9rem, 2vw, 1rem)",
+                cursor: "pointer",
+                marginTop: "clamp(10px, 3vw, 20px)",
+              }}
+            >
+              Explore Ziyarat →
+            </button>
+          </div>
+
           {/* Forty Hadith Card */}
           <div
             style={{

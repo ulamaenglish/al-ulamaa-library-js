@@ -23,6 +23,9 @@ export default function Navbar() {
     router.push("/login");
   };
 
+  // Define the font family to use throughout the navbar
+  const navFontFamily = "'Roboto', 'Helvetica', sans-serif";
+
   return (
     <>
       <nav
@@ -34,6 +37,7 @@ export default function Navbar() {
           backdropFilter: "blur(10px)",
           borderBottom: "1px solid rgba(255, 216, 155, 0.2)",
           padding: "15px 20px",
+          fontFamily: navFontFamily,
         }}
       >
         <div
@@ -80,6 +84,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               🏠 Home
@@ -92,6 +97,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               📚 Ayatollah Bahjat
@@ -113,6 +119,7 @@ export default function Navbar() {
                   display: "flex",
                   alignItems: "center",
                   gap: "5px",
+                  fontFamily: navFontFamily,
                 }}
               >
                 📖 Imam Khomeini ▾
@@ -141,6 +148,7 @@ export default function Navbar() {
                       color: "#e0e0e0",
                       textDecoration: "none",
                       fontSize: "0.9rem",
+                      fontFamily: navFontFamily,
                     }}
                   >
                     📜 40 Hadith & Adab
@@ -153,6 +161,7 @@ export default function Navbar() {
                       color: "#e0e0e0",
                       textDecoration: "none",
                       fontSize: "0.9rem",
+                      fontFamily: navFontFamily,
                     }}
                   >
                     ✍️ Poems
@@ -168,6 +177,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               📚 Shahid Mutahhari
@@ -180,6 +190,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               🙏 Prayer of Maasumeen
@@ -192,6 +203,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               🕌 Mafatih Worship
@@ -204,6 +216,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               📖 Necessity of Supplications
@@ -216,6 +229,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               📚 Stories of Ulama
@@ -228,6 +242,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 fontSize: "0.95rem",
                 transition: "color 0.3s",
+                fontFamily: navFontFamily,
               }}
             >
               🕌 Worship List
@@ -254,6 +269,7 @@ export default function Navbar() {
                     textDecoration: "none",
                     fontSize: "0.9rem",
                     fontWeight: "600",
+                    fontFamily: navFontFamily,
                   }}
                 >
                   👤 {user.name}
@@ -269,6 +285,7 @@ export default function Navbar() {
                     cursor: "pointer",
                     fontSize: "0.9rem",
                     fontWeight: "600",
+                    fontFamily: navFontFamily,
                   }}
                 >
                   🚪 Logout
@@ -287,6 +304,7 @@ export default function Navbar() {
                   fontSize: "0.9rem",
                   fontWeight: "600",
                   marginLeft: "20px",
+                  fontFamily: navFontFamily,
                 }}
               >
                 🔐 Login
@@ -323,6 +341,7 @@ export default function Navbar() {
               border: "1px solid rgba(255, 216, 155, 0.2)",
               padding: "20px",
               display: "none",
+              fontFamily: navFontFamily,
             }}
             className="mobile-menu-dropdown"
           >
@@ -333,6 +352,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -345,6 +365,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -357,6 +378,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -369,6 +391,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -381,6 +404,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -393,6 +417,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -405,6 +430,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -417,6 +443,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -429,6 +456,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -441,6 +469,7 @@ export default function Navbar() {
                 padding: "10px 0",
                 color: "#e0e0e0",
                 textDecoration: "none",
+                fontFamily: navFontFamily,
               }}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -463,6 +492,7 @@ export default function Navbar() {
                     padding: "10px 0",
                     color: "#ffd89b",
                     textDecoration: "none",
+                    fontFamily: navFontFamily,
                   }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -482,6 +512,7 @@ export default function Navbar() {
                     color: "#fca5a5",
                     cursor: "pointer",
                     marginTop: "10px",
+                    fontFamily: navFontFamily,
                   }}
                 >
                   🚪 Logout
@@ -500,6 +531,7 @@ export default function Navbar() {
                   textDecoration: "none",
                   textAlign: "center",
                   marginTop: "10px",
+                  fontFamily: navFontFamily,
                 }}
                 onClick={() => setMobileMenuOpen(false)}
               >
