@@ -470,7 +470,6 @@ export async function getUserStats(username: string) {
         saved_quotes: 0,
         notes: 0,
         quotes_read: 0,
-        // NEW: Ziyarat stats
         current_streak_days: 0,
         total_listening_time_seconds: 0,
         total_ziyarat_completed: 0,
@@ -506,7 +505,6 @@ export async function getUserStats(username: string) {
       saved_quotes: savedQuotesResult.count || 0,
       notes: notesResult.count || 0,
       quotes_read: uniqueQuotes.size,
-      // NEW: Ziyarat stats
       current_streak_days: listeningStats.data?.current_streak_days || 0,
       total_listening_time_seconds:
         listeningStats.data?.total_listening_time_seconds || 0,
@@ -526,7 +524,7 @@ export async function getUserStats(username: string) {
   }
 }
 
-// ==================== NEW: ZIYARAT FAVORITES ====================
+// ==================== ZIYARAT FAVORITES ====================
 
 export async function addToFavorites(username: string, ziyaratSlug: string) {
   try {
@@ -641,7 +639,7 @@ export async function isFavorite(username: string, ziyaratSlug: string) {
   }
 }
 
-// ==================== NEW: LISTENING HISTORY ====================
+// ==================== LISTENING HISTORY ====================
 
 export async function addListeningHistory(
   username: string,
@@ -704,7 +702,7 @@ export async function getListeningHistory(username: string, limit = 10) {
   }
 }
 
-// ==================== NEW: LISTENING STATS ====================
+// ==================== LISTENING STATS ====================
 
 async function updateListeningStats(
   userId: string,
@@ -744,13 +742,10 @@ async function updateListeningStats(
       let newStreak = currentStats.current_streak_days;
 
       if (lastDate === today) {
-        // Same day - no streak change
         newStreak = currentStats.current_streak_days;
       } else if (lastDate === yesterdayStr) {
-        // Consecutive day - increment streak
         newStreak = currentStats.current_streak_days + 1;
       } else {
-        // Streak broken - reset to 1
         newStreak = 1;
       }
 
@@ -775,14 +770,13 @@ async function updateListeningStats(
         .eq("user_id", userId);
     }
 
-    // Check for badges
     await checkAndAwardBadges(userId, username);
   } catch (error) {
     console.error("Update listening stats error:", error);
   }
 }
 
-// ==================== NEW: BADGES ====================
+// ==================== BADGES ====================
 
 async function checkAndAwardBadges(userId: string, username: string) {
   try {
@@ -796,42 +790,34 @@ async function checkAndAwardBadges(userId: string, username: string) {
 
     const badges = [];
 
-    // Badge: First Listen
     if (stats.total_ziyarat_completed >= 1) {
       badges.push({ type: "first_listen", name: "First Steps" });
     }
 
-    // Badge: 10 Ziyarat
     if (stats.total_ziyarat_completed >= 10) {
       badges.push({ type: "ten_ziyarat", name: "Devoted Listener" });
     }
 
-    // Badge: 50 Ziyarat
     if (stats.total_ziyarat_completed >= 50) {
       badges.push({ type: "fifty_ziyarat", name: "Spiritual Seeker" });
     }
 
-    // Badge: 7 Day Streak
     if (stats.current_streak_days >= 7) {
       badges.push({ type: "seven_day_streak", name: "Week Warrior" });
     }
 
-    // Badge: 30 Day Streak
     if (stats.current_streak_days >= 30) {
       badges.push({ type: "thirty_day_streak", name: "Month Master" });
     }
 
-    // Badge: 1 Hour Total Listening
     if (stats.total_listening_time_seconds >= 3600) {
       badges.push({ type: "one_hour", name: "Hour of Remembrance" });
     }
 
-    // Badge: 10 Hours Total Listening
     if (stats.total_listening_time_seconds >= 36000) {
       badges.push({ type: "ten_hours", name: "Dedicated Soul" });
     }
 
-    // Insert badges (will ignore duplicates due to UNIQUE constraint)
     for (const badge of badges) {
       await supabase.from("user_badges").insert([
         {
@@ -875,7 +861,7 @@ export async function getUserBadges(username: string) {
   }
 }
 
-// ==================== NEW: MONTHLY REPORT ====================
+// ==================== MONTHLY REPORT ====================
 
 export async function getMonthlyListeningReport(username: string) {
   try {
@@ -887,7 +873,6 @@ export async function getMonthlyListeningReport(username: string) {
       return null;
     }
 
-    // Get current month's data
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -904,7 +889,6 @@ export async function getMonthlyListeningReport(username: string) {
       return null;
     }
 
-    // Calculate stats
     const totalListens = monthHistory?.length || 0;
     const totalTime =
       monthHistory?.reduce(
@@ -914,14 +898,12 @@ export async function getMonthlyListeningReport(username: string) {
     const completedListens =
       monthHistory?.filter((item) => item.completed).length || 0;
 
-    // Count by ziyarat
     const ziyaratCounts: { [key: string]: number } = {};
     monthHistory?.forEach((item) => {
       ziyaratCounts[item.ziyarat_slug] =
         (ziyaratCounts[item.ziyarat_slug] || 0) + 1;
     });
 
-    // Find most listened
     const mostListened = Object.entries(ziyaratCounts).sort(
       ([, a], [, b]) => b - a
     )[0];
@@ -937,6 +919,374 @@ export async function getMonthlyListeningReport(username: string) {
     };
   } catch (error) {
     console.error("Get monthly report error:", error);
+    return null;
+  }
+}
+
+// ==================== NEW: AI CHATBOT FUNCTIONS ====================
+
+export async function createChatSession(username: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("ai_chat_sessions")
+      .insert([
+        {
+          user_id: user.id,
+          username,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Create chat session error:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Create chat session error:", error);
+    return null;
+  }
+}
+
+export async function endChatSession(sessionId: number, totalMessages: number) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return;
+    }
+
+    await supabase
+      .from("ai_chat_sessions")
+      .update({
+        session_end: new Date().toISOString(),
+        total_messages: totalMessages,
+      })
+      .eq("id", sessionId)
+      .eq("user_id", user.id);
+  } catch (error) {
+    console.error("End chat session error:", error);
+  }
+}
+
+export async function saveChatMessage(
+  sessionId: number,
+  username: string,
+  role: "user" | "assistant",
+  message: string,
+  intentType?: string,
+  emotion?: string,
+  keywords?: string[]
+) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false };
+    }
+
+    const { error } = await supabase.from("ai_chat_messages").insert([
+      {
+        session_id: sessionId,
+        user_id: user.id,
+        username,
+        role,
+        message,
+        intent_type: intentType,
+        emotion,
+        keywords,
+      },
+    ]);
+
+    if (error) {
+      console.error("Save chat message error:", error);
+      return { success: false };
+    }
+
+    // Update session message count
+    await supabase.rpc("increment_session_messages", { session_id: sessionId });
+
+    // Log analytics for user messages
+    if (role === "user" && intentType) {
+      await logAIAnalytics(username, intentType, emotion, keywords);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Save chat message error:", error);
+    return { success: false };
+  }
+}
+
+export async function getUserChatHistory(username: string, limit = 50) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("ai_chat_messages")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("Get chat history error:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Get chat history error:", error);
+    return [];
+  }
+}
+
+export async function saveAIResponse(
+  username: string,
+  question: string,
+  answer: string
+) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, message: "Please login first" };
+    }
+
+    const { error } = await supabase.from("saved_ai_responses").insert([
+      {
+        user_id: user.id,
+        username,
+        question,
+        answer,
+      },
+    ]);
+
+    if (error) {
+      console.error("Save AI response error:", error);
+      return { success: false, message: "Error saving response" };
+    }
+
+    return { success: true, message: "Response saved!" };
+  } catch (error) {
+    console.error("Save AI response error:", error);
+    return { success: false, message: "Error saving response" };
+  }
+}
+
+export async function getSavedAIResponses(username: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("saved_ai_responses")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Get saved AI responses error:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Get saved AI responses error:", error);
+    return [];
+  }
+}
+
+export async function deleteSavedAIResponse(responseId: number) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, message: "Please login first" };
+    }
+
+    const { error } = await supabase
+      .from("saved_ai_responses")
+      .delete()
+      .eq("id", responseId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Delete AI response error:", error);
+      return { success: false, message: "Error deleting response" };
+    }
+
+    return { success: true, message: "Response deleted!" };
+  } catch (error) {
+    console.error("Delete AI response error:", error);
+    return { success: false, message: "Error deleting response" };
+  }
+}
+
+async function logAIAnalytics(
+  username: string,
+  intentType: string,
+  emotion?: string,
+  keywords?: string[]
+) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return;
+    }
+
+    await supabase.from("ai_analytics").insert([
+      {
+        user_id: user.id,
+        username,
+        intent_type: intentType,
+        emotion,
+        keywords,
+      },
+    ]);
+  } catch (error) {
+    console.error("Log AI analytics error:", error);
+  }
+}
+
+export async function getAIStats(username: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return null;
+    }
+
+    // Total sessions
+    const { count: totalSessions } = await supabase
+      .from("ai_chat_sessions")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    // Total messages
+    const { count: totalMessages } = await supabase
+      .from("ai_chat_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    // Top intents
+    const { data: intents } = await supabase
+      .from("ai_analytics")
+      .select("intent_type")
+      .eq("user_id", user.id);
+
+    const intentCounts: { [key: string]: number } = {};
+    intents?.forEach((item) => {
+      if (item.intent_type) {
+        intentCounts[item.intent_type] =
+          (intentCounts[item.intent_type] || 0) + 1;
+      }
+    });
+
+    const topIntents = Object.entries(intentCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([intent, count]) => ({ intent, count }));
+
+    // Top emotions
+    const { data: emotions } = await supabase
+      .from("ai_analytics")
+      .select("emotion")
+      .eq("user_id", user.id)
+      .not("emotion", "is", null);
+
+    const emotionCounts: { [key: string]: number } = {};
+    emotions?.forEach((item) => {
+      if (item.emotion) {
+        emotionCounts[item.emotion] = (emotionCounts[item.emotion] || 0) + 1;
+      }
+    });
+
+    const topEmotions = Object.entries(emotionCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([emotion, count]) => ({ emotion, count }));
+
+    // Saved responses count
+    const { count: savedResponses } = await supabase
+      .from("saved_ai_responses")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    return {
+      total_sessions: totalSessions || 0,
+      total_messages: totalMessages || 0,
+      top_intents: topIntents,
+      top_emotions: topEmotions,
+      saved_responses: savedResponses || 0,
+    };
+  } catch (error) {
+    console.error("Get AI stats error:", error);
+    return null;
+  }
+}
+
+export async function getActiveSession(username: string) {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("ai_chat_sessions")
+      .select("*")
+      .eq("user_id", user.id)
+      .is("session_end", null)
+      .order("session_start", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Get active session error:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Get active session error:", error);
     return null;
   }
 }

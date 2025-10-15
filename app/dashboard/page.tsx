@@ -13,6 +13,8 @@ import {
   getListeningHistory,
   getUserBadges,
   getMonthlyListeningReport,
+  getAIStats,
+  getSavedAIResponses,
 } from "@/lib/database";
 import Particles from "@/components/Particles";
 
@@ -27,6 +29,8 @@ export default function Dashboard() {
     total_listening_time_seconds: 0,
     total_ziyarat_completed: 0,
   });
+  const [aiStats, setAIStats] = useState<any>(null);
+  const [savedAIResponses, setSavedAIResponses] = useState<any[]>([]);
   const [savedQuotes, setSavedQuotes] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
@@ -35,10 +39,11 @@ export default function Dashboard() {
   const [badges, setBadges] = useState<any[]>([]);
   const [monthlyReport, setMonthlyReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"quotes" | "ziyarat">("quotes");
+  const [activeTab, setActiveTab] = useState<"quotes" | "ziyarat" | "ai">(
+    "quotes"
+  );
 
   useEffect(() => {
-    // Check if logged in
     const userStr = localStorage.getItem("user");
     if (!userStr) {
       router.push("/");
@@ -47,8 +52,6 @@ export default function Dashboard() {
 
     const userData = JSON.parse(userStr);
     setUser(userData);
-
-    // Load data
     loadData(userData.username);
   }, [router]);
 
@@ -63,6 +66,8 @@ export default function Dashboard() {
         listeningData,
         badgesData,
         reportData,
+        aiStatsData,
+        aiResponsesData,
       ] = await Promise.all([
         getUserStats(username),
         getSavedQuotes(username),
@@ -72,12 +77,9 @@ export default function Dashboard() {
         getListeningHistory(username, 5),
         getUserBadges(username),
         getMonthlyListeningReport(username),
+        getAIStats(username),
+        getSavedAIResponses(username),
       ]);
-
-      console.log("📊 Stats:", statsData);
-      console.log("🎧 Favorites:", favoritesData);
-      console.log("🏆 Badges:", badgesData);
-      console.log("📈 Monthly Report:", reportData);
 
       setStats(statsData);
       setSavedQuotes(quotesData.slice(0, 5));
@@ -87,6 +89,8 @@ export default function Dashboard() {
       setListeningHistory(listeningData);
       setBadges(badgesData);
       setMonthlyReport(reportData);
+      setAIStats(aiStatsData);
+      setSavedAIResponses(aiResponsesData.slice(0, 5));
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -323,6 +327,28 @@ export default function Dashboard() {
             }}
           >
             🕋 Ziyarat Stats
+          </button>
+          <button
+            onClick={() => setActiveTab("ai")}
+            style={{
+              padding: "12px 30px",
+              background:
+                activeTab === "ai"
+                  ? "rgba(102, 126, 234, 0.2)"
+                  : "rgba(255, 255, 255, 0.05)",
+              border: `1px solid ${
+                activeTab === "ai"
+                  ? "rgba(102, 126, 234, 0.4)"
+                  : "rgba(255, 255, 255, 0.1)"
+              }`,
+              borderRadius: "10px",
+              color: activeTab === "ai" ? "#667eea" : "white",
+              fontWeight: "600",
+              cursor: "pointer",
+              fontSize: "clamp(0.9rem, 2vw, 1rem)",
+            }}
+          >
+            🤖 AI Assistant
           </button>
         </div>
 
@@ -1128,6 +1154,393 @@ export default function Dashboard() {
           </>
         )}
 
+        {/* AI ASSISTANT TAB - NEW! */}
+        {activeTab === "ai" && (
+          <>
+            {/* AI Stats Cards */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
+                gap: "clamp(15px, 3vw, 30px)",
+                marginBottom: "clamp(40px, 8vw, 60px)",
+              }}
+            >
+              {[
+                {
+                  icon: "💬",
+                  label: "Total Chats",
+                  value: aiStats?.total_sessions || 0,
+                  color: "#667eea",
+                },
+                {
+                  icon: "📨",
+                  label: "Messages Sent",
+                  value: aiStats?.total_messages || 0,
+                  color: "#86efac",
+                },
+                {
+                  icon: "💾",
+                  label: "Saved Responses",
+                  value: aiStats?.saved_responses || 0,
+                  color: "#ffd89b",
+                },
+              ].map((stat, index) => (
+                <div
+                  key={index}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.05)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "20px",
+                    padding: "clamp(20px, 4vw, 30px)",
+                    textAlign: "center",
+                    transition: "transform 0.3s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-5px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "clamp(2rem, 6vw, 3rem)",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    {stat.icon}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "clamp(2rem, 5vw, 2.5rem)",
+                      fontWeight: "bold",
+                      color: stat.color,
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {stat.value}
+                  </div>
+                  <div
+                    style={{
+                      color: "#d0d0d0",
+                      fontSize: "clamp(0.85rem, 2vw, 1rem)",
+                    }}
+                  >
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gap: "20px",
+                marginBottom: "40px",
+              }}
+            >
+              <button
+                onClick={() => router.push("/ai-assistant")}
+                style={{
+                  padding: "25px",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  border: "none",
+                  borderRadius: "15px",
+                  color: "white",
+                  fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  transition: "all 0.3s",
+                  boxShadow: "0 5px 20px rgba(102, 126, 234, 0.4)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-5px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 10px 30px rgba(102, 126, 234, 0.6)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 5px 20px rgba(102, 126, 234, 0.4)";
+                }}
+              >
+                🤖 Chat with AI Assistant
+              </button>
+
+              <button
+                onClick={() => router.push("/saved-responses")}
+                style={{
+                  padding: "25px",
+                  background:
+                    "linear-gradient(135deg, #86efac 0%, #34d399 100%)",
+                  border: "none",
+                  borderRadius: "15px",
+                  color: "#064e3b",
+                  fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  transition: "all 0.3s",
+                  boxShadow: "0 5px 20px rgba(134, 239, 172, 0.4)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-5px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 10px 30px rgba(134, 239, 172, 0.6)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 5px 20px rgba(134, 239, 172, 0.4)";
+                }}
+              >
+                💾 View Saved Responses
+              </button>
+            </div>
+
+            {/* Top Topics & Emotions */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "30px",
+                marginBottom: "40px",
+              }}
+            >
+              {/* Top Topics */}
+              {aiStats?.top_intents && aiStats.top_intents.length > 0 && (
+                <div
+                  style={{
+                    background: "rgba(255, 255, 255, 0.05)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "20px",
+                    padding: "clamp(20px, 4vw, 30px)",
+                  }}
+                >
+                  <h2
+                    style={{
+                      color: "#667eea",
+                      fontSize: "clamp(1.2rem, 3vw, 1.5rem)",
+                      marginBottom: "20px",
+                      fontWeight: "700",
+                    }}
+                  >
+                    📊 Top Question Topics
+                  </h2>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                    }}
+                  >
+                    {aiStats.top_intents.map((intent: any, index: number) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: "rgba(102, 126, 234, 0.1)",
+                          padding: "15px",
+                          borderRadius: "10px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "#d0d0d0",
+                            fontSize: "clamp(0.9rem, 2vw, 1rem)",
+                            textTransform: "capitalize",
+                          }}
+                        >
+                          {intent.intent.replace(/_/g, " ")}
+                        </span>
+                        <span
+                          style={{
+                            color: "#667eea",
+                            fontWeight: "700",
+                            fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+                          }}
+                        >
+                          {intent.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Top Emotions */}
+              {aiStats?.top_emotions && aiStats.top_emotions.length > 0 && (
+                <div
+                  style={{
+                    background: "rgba(255, 255, 255, 0.05)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "20px",
+                    padding: "clamp(20px, 4vw, 30px)",
+                  }}
+                >
+                  <h2
+                    style={{
+                      color: "#ffd89b",
+                      fontSize: "clamp(1.2rem, 3vw, 1.5rem)",
+                      marginBottom: "20px",
+                      fontWeight: "700",
+                    }}
+                  >
+                    😊 Common Emotions
+                  </h2>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                    }}
+                  >
+                    {aiStats.top_emotions.map((emotion: any, index: number) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: "rgba(255, 216, 155, 0.1)",
+                          padding: "15px",
+                          borderRadius: "10px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "#d0d0d0",
+                            fontSize: "clamp(0.9rem, 2vw, 1rem)",
+                            textTransform: "capitalize",
+                          }}
+                        >
+                          {emotion.emotion}
+                        </span>
+                        <span
+                          style={{
+                            color: "#ffd89b",
+                            fontWeight: "700",
+                            fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+                          }}
+                        >
+                          {emotion.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Saved Responses */}
+            <div
+              style={{
+                background: "rgba(255, 255, 255, 0.05)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "20px",
+                padding: "clamp(20px, 4vw, 30px)",
+              }}
+            >
+              <h2
+                style={{
+                  color: "#86efac",
+                  fontSize: "clamp(1.2rem, 3vw, 1.5rem)",
+                  marginBottom: "20px",
+                  fontWeight: "700",
+                }}
+              >
+                💾 Recent Saved Responses
+              </h2>
+
+              {savedAIResponses.length > 0 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "15px",
+                  }}
+                >
+                  {savedAIResponses.map((response) => (
+                    <div
+                      key={response.id}
+                      onClick={() => router.push("/saved-responses")}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.03)",
+                        padding: "15px",
+                        borderRadius: "10px",
+                        borderLeft: "3px solid #86efac",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: "#667eea",
+                          fontWeight: "600",
+                          marginBottom: "8px",
+                          fontSize: "clamp(0.9rem, 2vw, 1rem)",
+                        }}
+                      >
+                        Q: {response.question.substring(0, 60)}...
+                      </div>
+                      <div
+                        style={{
+                          color: "#d0d0d0",
+                          fontSize: "clamp(0.85rem, 1.8vw, 0.9rem)",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        A: {response.answer.substring(0, 100)}...
+                      </div>
+                      <div
+                        style={{
+                          color: "#999",
+                          fontSize: "clamp(0.75rem, 1.5vw, 0.85rem)",
+                        }}
+                      >
+                        {new Date(response.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "30px" }}>
+                  <p style={{ color: "#999", marginBottom: "20px" }}>
+                    No saved responses yet
+                  </p>
+                  <button
+                    onClick={() => router.push("/ai-assistant")}
+                    style={{
+                      padding: "12px 25px",
+                      background:
+                        "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      border: "none",
+                      borderRadius: "10px",
+                      color: "white",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Start Chatting with AI
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
         {/* Quick Links */}
         <div
           style={{
@@ -1172,6 +1585,16 @@ export default function Dashboard() {
                 name: "Imam Khomeini Hadith",
                 icon: "📖",
                 path: "/imam-khomeini-hadith",
+              },
+              {
+                name: "AI Assistant",
+                icon: "🤖",
+                path: "/ai-assistant",
+              },
+              {
+                name: "Islamic Calendar",
+                icon: "📅",
+                path: "/calendar",
               },
             ].map((link, index) => (
               <button

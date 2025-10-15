@@ -7,12 +7,25 @@ import Particles from "@/components/Particles";
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
     if (userStr) {
       setUser(JSON.parse(userStr));
     }
+
+    // Show floating button after scrolling
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowFloatingButton(true);
+      } else {
+        setShowFloatingButton(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const topics = [
@@ -58,6 +71,12 @@ export default function HomePage() {
       desc: "Tales of scholarly devotion",
       path: "/stories-ulama",
     },
+    {
+      title: "Islamic Calendar",
+      icon: "🌙",
+      desc: "Shia Islamic events and holy days",
+      path: "/calendar",
+    },
   ];
 
   return (
@@ -72,6 +91,93 @@ export default function HomePage() {
       }}
     >
       <Particles />
+
+      {/* Global Styles - ALL ANIMATIONS IN ONE PLACE */}
+      <style jsx global>{`
+        @keyframes gradientShift {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        @keyframes float {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
+        }
+
+        @keyframes countUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes pulse {
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+
+        @keyframes floatAI {
+          0%,
+          100% {
+            transform: translate(0, 0) rotate(0deg);
+          }
+          50% {
+            transform: translate(20px, 20px) rotate(180deg);
+          }
+        }
+
+        @keyframes floatButton {
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        @keyframes pulse-ring {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1.5);
+            opacity: 0;
+          }
+        }
+
+        @keyframes bounce {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+      `}</style>
 
       {/* Header with Login */}
       <div
@@ -314,7 +420,7 @@ export default function HomePage() {
             padding: "0 10px",
           }}
         >
-          {/* NEW: All Ziyarat Featured Card */}
+          {/* All Ziyarat Card */}
           <div
             style={{
               background: "rgba(255, 255, 255, 0.05)",
@@ -552,6 +658,160 @@ export default function HomePage() {
               Begin Journey →
             </button>
           </div>
+
+          {/* AI SPIRITUAL ASSISTANT CARD */}
+          <div
+            onClick={() => router.push("/ai-assistant")}
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              borderRadius: "20px",
+              padding: "30px",
+              cursor: "pointer",
+              transition: "all 0.3s",
+              position: "relative",
+              overflow: "hidden",
+              border: "2px solid rgba(255, 255, 255, 0.1)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-10px)";
+              e.currentTarget.style.boxShadow =
+                "0 20px 40px rgba(102, 126, 234, 0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            {/* Animated Background */}
+            <div
+              style={{
+                position: "absolute",
+                top: "-50%",
+                right: "-50%",
+                width: "200%",
+                height: "200%",
+                background:
+                  "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
+                animation: "floatAI 6s ease-in-out infinite",
+              }}
+            />
+
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <div
+                style={{
+                  fontSize: "4rem",
+                  marginBottom: "15px",
+                  textAlign: "center",
+                  animation: "pulse 2s ease-in-out infinite",
+                }}
+              >
+                🤖
+              </div>
+
+              <h3
+                style={{
+                  fontSize: "clamp(1.3rem, 3vw, 1.8rem)",
+                  fontWeight: "900",
+                  color: "white",
+                  marginBottom: "10px",
+                  textAlign: "center",
+                  textShadow: "0 2px 10px rgba(0, 0, 0, 0.3)",
+                }}
+              >
+                AI Spiritual Assistant
+              </h3>
+
+              <p
+                style={{
+                  color: "rgba(255, 255, 255, 0.9)",
+                  fontSize: "clamp(0.9rem, 2vw, 1rem)",
+                  lineHeight: "1.6",
+                  marginBottom: "15px",
+                  textAlign: "center",
+                }}
+              >
+                Your intelligent companion for Islamic guidance, prayer
+                recommendations, and spiritual counseling
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  marginBottom: "20px",
+                }}
+              >
+                {[
+                  "💬 24/7 Spiritual Guidance",
+                  "🤲 Personalized Prayer Recommendations",
+                  "📅 Islamic Calendar Integration",
+                  "🧭 Smart Website Navigation",
+                ].map((feature, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "0.9rem",
+                      color: "rgba(255, 255, 255, 0.95)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        background: "white",
+                        borderRadius: "50%",
+                      }}
+                    />
+                    {feature}
+                  </div>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "8px 15px",
+                  background: "rgba(255, 255, 255, 0.2)",
+                  borderRadius: "20px",
+                  fontSize: "0.85rem",
+                  fontWeight: "700",
+                  color: "white",
+                  marginBottom: "15px",
+                }}
+              >
+                ✨ NEW FEATURE
+              </div>
+
+              <button
+                style={{
+                  width: "100%",
+                  padding: "12px 20px",
+                  background: "rgba(255, 255, 255, 0.2)",
+                  border: "2px solid rgba(255, 255, 255, 0.4)",
+                  borderRadius: "10px",
+                  color: "white",
+                  fontSize: "1rem",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  transition: "all 0.3s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.transform = "scale(1.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                Start Chatting Now →
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* EXPLORE BY TOPIC */}
@@ -757,6 +1017,119 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* FLOATING AI BUTTON */}
+      {showFloatingButton && (
+        <>
+          <div
+            onClick={() => router.push("/ai-assistant")}
+            style={{
+              position: "fixed",
+              bottom: "clamp(20px, 5vw, 30px)",
+              right: "clamp(20px, 5vw, 30px)",
+              width: "clamp(60px, 12vw, 70px)",
+              height: "clamp(60px, 12vw, 70px)",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 8px 25px rgba(102, 126, 234, 0.5)",
+              zIndex: 999,
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              animation: "floatButton 3s ease-in-out infinite",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.15) rotate(10deg)";
+              e.currentTarget.style.boxShadow =
+                "0 12px 35px rgba(102, 126, 234, 0.7)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1) rotate(0deg)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 25px rgba(102, 126, 234, 0.5)";
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                background: "rgba(102, 126, 234, 0.4)",
+                animation:
+                  "pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              }}
+            />
+
+            <div
+              style={{
+                fontSize: "clamp(2rem, 5vw, 2.5rem)",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              🤖
+            </div>
+
+            <div
+              style={{
+                position: "absolute",
+                top: "-5px",
+                right: "-5px",
+                width: "clamp(20px, 4vw, 24px)",
+                height: "clamp(20px, 4vw, 24px)",
+                background: "#10b981",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "clamp(0.65rem, 1.5vw, 0.75rem)",
+                fontWeight: "700",
+                color: "white",
+                border: "3px solid #000",
+                animation: "bounce 1s ease-in-out infinite",
+              }}
+            >
+              AI
+            </div>
+          </div>
+
+          <div
+            style={{
+              position: "fixed",
+              bottom: "clamp(20px, 5vw, 30px)",
+              right: "clamp(95px, 18vw, 115px)",
+              background: "rgba(0, 0, 0, 0.9)",
+              color: "white",
+              padding: "12px 18px",
+              borderRadius: "10px",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+              whiteSpace: "nowrap",
+              zIndex: 998,
+              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
+              pointerEvents: "none",
+            }}
+          >
+            💬 Ask AI Assistant
+            <div
+              style={{
+                position: "absolute",
+                right: "-8px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 0,
+                height: 0,
+                borderTop: "8px solid transparent",
+                borderBottom: "8px solid transparent",
+                borderLeft: "8px solid rgba(0, 0, 0, 0.9)",
+              }}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }
