@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Particles from "@/components/Particles";
 import LivePrayerTimer from "@/components/LivePrayerTimer";
+import { schedulePrayerNotifications } from "@/lib/notificationManager";
 import QiblaCompass from "@/components/QiblaCompass";
 import {
   getCurrentHijriDate,
@@ -171,6 +172,7 @@ export default function IslamicCalendarPage() {
       const prayers = await getPrayerTimes(city, country);
       if (prayers) {
         setPrayerTimes(prayers);
+        schedulePrayerNotifications(prayers);
       }
     } catch (error) {
       console.error("Error loading prayer times:", error);

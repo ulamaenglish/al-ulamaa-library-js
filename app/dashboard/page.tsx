@@ -17,6 +17,7 @@ import {
   getSavedAIResponses,
 } from "@/lib/database";
 import Particles from "@/components/Particles";
+import { getUserSubscription } from "@/lib/subscriptionHelper";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -1595,6 +1596,11 @@ export default function Dashboard() {
                 name: "Islamic Calendar",
                 icon: "📅",
                 path: "/calendar",
+              },
+              {
+                name: "Subscription",
+                icon: "⭐",
+                path: "/subscription",
               },
             ].map((link, index) => (
               <button

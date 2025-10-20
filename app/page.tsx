@@ -71,6 +71,13 @@ export default function HomePage() {
       desc: "Tales of scholarly devotion",
       path: "/stories-ulama",
     },
+    // 🆕 ADD THIS ONE:
+    {
+      title: "Dua Wisdom",
+      icon: "🤲",
+      desc: "Essential daily supplications",
+      path: "/dua-wisdom",
+    },
     {
       title: "Islamic Calendar",
       icon: "🌙",
