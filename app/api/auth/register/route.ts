@@ -1,39 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { registerUser } from "@/lib/database";
-
-// Rate limiter: 5 registrations per hour per IP
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "1 h"),
-  analytics: true,
-});
 
 export async function POST(request: NextRequest) {
   try {
-    // ✅ FIX: Get IP address properly in Next.js 15
-    const forwardedFor = request.headers.get("x-forwarded-for");
-    const realIp = request.headers.get("x-real-ip");
-    const ip = forwardedFor?.split(",")[0] ?? realIp ?? "unknown";
-
-    // Check rate limit
-    const { success, remaining, reset } = await ratelimit.limit(
-      `register_${ip}`
-    );
-
-    if (!success) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Too many registration attempts. Please try again in ${Math.ceil(
-            (reset - Date.now()) / 1000 / 60
-          )} minutes.`,
-        },
-        { status: 429 }
-      );
-    }
-
     // Parse request body
     const { username, email, password, fullName } = await request.json();
 
@@ -88,7 +57,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Account created successfully!",
-      remaining: remaining - 1,
     });
   } catch (error) {
     console.error("Registration API error:", error);
