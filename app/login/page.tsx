@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Particles from "@/components/Particles";
-import { loginUser, registerUser } from "@/lib/database";
+import { loginUser } from "@/lib/database";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +38,6 @@ export default function LoginPage() {
       const result = await loginUser(loginUsername, loginPassword);
 
       if (result.success && result.user) {
-        // Save user to localStorage
         localStorage.setItem("user", JSON.stringify(result.user));
 
         setMessage({
@@ -48,7 +47,6 @@ export default function LoginPage() {
 
         setTimeout(() => {
           router.push("/");
-          // Force reload to update navbar
           window.location.href = "/";
         }, 1000);
       } else {
@@ -85,33 +83,6 @@ export default function LoginPage() {
       return;
     }
 
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(regUsername)) {
-      setMessage({
-        type: "error",
-        text: "❌ Username must be 3-20 characters (letters, numbers, underscore only)",
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(regEmail)) {
-      setMessage({
-        type: "error",
-        text: "❌ Please enter a valid email address",
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (regPassword.length < 6) {
-      setMessage({
-        type: "error",
-        text: "❌ Password must be at least 6 characters long",
-      });
-      setLoading(false);
-      return;
-    }
-
     if (regPassword !== regConfirmPassword) {
       setMessage({ type: "error", text: "❌ Passwords do not match" });
       setLoading(false);
@@ -119,12 +90,19 @@ export default function LoginPage() {
     }
 
     try {
-      const result = await registerUser(
-        regUsername,
-        regEmail,
-        regPassword,
-        regFullName
-      );
+      // 🔒 NEW: Use rate-limited API endpoint
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: regUsername,
+          email: regEmail,
+          password: regPassword,
+          fullName: regFullName,
+        }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         setMessage({
