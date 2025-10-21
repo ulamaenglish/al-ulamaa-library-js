@@ -84,6 +84,48 @@ export default function AudiobookDetailPage() {
     }
   }, [selectedVoice, currentChapterIndex, hasAccess]);
 
+  // Add this new useEffect to save progress every 5 seconds
+  useEffect(() => {
+    if (!selectedVoice || !hasAccess || !audioRef.current) return;
+
+    const saveProgress = async () => {
+      const audio = audioRef.current;
+      if (!audio || audio.paused) return;
+
+      const userStr = localStorage.getItem("user");
+      if (!userStr) return;
+
+      const user = JSON.parse(userStr);
+      if (!user.id) return;
+
+      try {
+        // Save to user_audiobook_progress
+        const response = await fetch("/api/audiobooks/save-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            audiobook_id: audiobookId,
+            voice_id: selectedVoice.voice_id,
+            current_time_seconds: Math.floor(audio.currentTime),
+            completed: audio.currentTime >= audio.duration - 5,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to save progress");
+        }
+      } catch (error) {
+        console.error("Error saving progress:", error);
+      }
+    };
+
+    // Save progress every 5 seconds while playing
+    const interval = setInterval(saveProgress, 5000);
+
+    return () => clearInterval(interval);
+  }, [selectedVoice, hasAccess, audiobookId]);
+
   const checkAccess = async () => {
     const userStr = localStorage.getItem("user");
     if (!userStr) {
