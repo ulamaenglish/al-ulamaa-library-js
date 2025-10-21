@@ -8,13 +8,33 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { user_id, audiobook_id, voice_id, current_time_seconds, completed } =
-      await request.json();
+    const {
+      user_email,
+      audiobook_id,
+      voice_id,
+      current_time_seconds,
+      completed,
+    } = await request.json();
+
+    // Get user_id from profiles table using email
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", user_email)
+      .single();
+
+    if (profileError || !profile) {
+      console.error("Error finding user:", profileError);
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
+    }
 
     // Upsert progress (insert or update)
     const { error } = await supabase.from("user_audiobook_progress").upsert(
       {
-        user_id,
+        user_id: profile.id,
         audiobook_id,
         voice_id,
         current_time_seconds,

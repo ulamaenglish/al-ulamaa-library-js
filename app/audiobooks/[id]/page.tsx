@@ -84,7 +84,7 @@ export default function AudiobookDetailPage() {
     }
   }, [selectedVoice, currentChapterIndex, hasAccess]);
 
-  // Add this new useEffect to save progress every 5 seconds
+  // Save audiobook progress every 5 seconds
   useEffect(() => {
     if (!selectedVoice || !hasAccess || !audioRef.current) return;
 
@@ -96,15 +96,14 @@ export default function AudiobookDetailPage() {
       if (!userStr) return;
 
       const user = JSON.parse(userStr);
-      if (!user.id) return;
+      if (!user.email) return; // ✅ Changed from user.id to user.email
 
       try {
-        // Save to user_audiobook_progress
         const response = await fetch("/api/audiobooks/save-progress", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_id: user.id,
+            user_email: user.email, // ✅ Changed from user_id to user_email
             audiobook_id: audiobookId,
             voice_id: selectedVoice.voice_id,
             current_time_seconds: Math.floor(audio.currentTime),
