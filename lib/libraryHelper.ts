@@ -129,36 +129,81 @@ export async function updateProgress(
   }
 }
 
-// Get user's library
+// Get user's library with progress from user_audiobook_progress
 export async function getUserLibrary(
   userEmail: string,
   filter?: "all" | "favorites" | "in-progress" | "completed"
 ) {
   try {
-    let query = supabase
+    // Get user's profile ID
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", userEmail)
+      .single();
+
+    if (!profile) {
+      return { success: false, error: "User not found", data: [] };
+    }
+
+    // Get library items
+    let libraryQuery = supabase
       .from("user_library")
-      .select(
-        `
-        *,
-        audiobook:audiobooks(*)
-      `
-      )
+      .select("*")
       .eq("user_email", userEmail)
       .order("last_played_at", { ascending: false });
 
+    const { data: libraryData, error: libraryError } = await libraryQuery;
+    if (libraryError) throw libraryError;
+
+    // Get progress data from user_audiobook_progress
+    const { data: progressData } = await supabase
+      .from("user_audiobook_progress")
+      .select("*")
+      .eq("user_id", profile.id);
+
+    // Get audiobook details
+    const audiobookIds = libraryData.map((item) => item.audiobook_id);
+    const { data: audiobooks } = await supabase
+      .from("audiobooks")
+      .select("*")
+      .in("id", audiobookIds);
+
+    // Merge data
+    const mergedData = libraryData.map((libItem) => {
+      const progress = progressData?.find(
+        (p) => p.audiobook_id === libItem.audiobook_id
+      );
+      const audiobook = audiobooks?.find(
+        (a) => a.id.toString() === libItem.audiobook_id
+      );
+
+      return {
+        ...libItem,
+        // Use progress from user_audiobook_progress if available
+        progress_seconds:
+          progress?.current_time_seconds || libItem.progress_seconds || 0,
+        completed: progress?.completed || libItem.completed || false,
+        last_played_at: progress?.last_listened_at || libItem.last_played_at,
+        total_seconds:
+          audiobook?.duration_seconds || libItem.total_seconds || 0,
+        audiobook: audiobook,
+      };
+    });
+
     // Apply filters
+    let filteredData = mergedData;
     if (filter === "favorites") {
-      query = query.eq("is_favorite", true);
+      filteredData = mergedData.filter((item) => item.is_favorite);
     } else if (filter === "in-progress") {
-      query = query.eq("completed", false).gt("progress_seconds", 0);
+      filteredData = mergedData.filter(
+        (item) => !item.completed && item.progress_seconds > 0
+      );
     } else if (filter === "completed") {
-      query = query.eq("completed", true);
+      filteredData = mergedData.filter((item) => item.completed);
     }
 
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return { success: true, data: data as LibraryItem[] };
+    return { success: true, data: filteredData as LibraryItem[] };
   } catch (error: any) {
     console.error("Error fetching library:", error);
     return { success: false, error: error.message, data: [] };
@@ -186,23 +231,57 @@ export async function isInLibrary(userEmail: string, audiobookId: string) {
   }
 }
 
-// Get library statistics
+// Get library statistics with progress data
 export async function getLibraryStats(userEmail: string) {
   try {
-    const { data, error } = await supabase
+    // Get user's profile ID
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", userEmail)
+      .single();
+
+    if (!profile) {
+      return {
+        success: false,
+        stats: { total: 0, favorites: 0, inProgress: 0, completed: 0 },
+      };
+    }
+
+    // Get library data
+    const { data: libraryData, error: libraryError } = await supabase
       .from("user_library")
       .select("*")
       .eq("user_email", userEmail);
 
-    if (error) throw error;
+    if (libraryError) throw libraryError;
+
+    // Get progress data
+    const { data: progressData } = await supabase
+      .from("user_audiobook_progress")
+      .select("*")
+      .eq("user_id", profile.id);
+
+    // Merge and calculate stats
+    const mergedData = libraryData.map((libItem) => {
+      const progress = progressData?.find(
+        (p) => p.audiobook_id === libItem.audiobook_id
+      );
+      return {
+        ...libItem,
+        progress_seconds:
+          progress?.current_time_seconds || libItem.progress_seconds || 0,
+        completed: progress?.completed || libItem.completed || false,
+      };
+    });
 
     const stats = {
-      total: data.length,
-      favorites: data.filter((item) => item.is_favorite).length,
-      inProgress: data.filter(
+      total: mergedData.length,
+      favorites: mergedData.filter((item) => item.is_favorite).length,
+      inProgress: mergedData.filter(
         (item) => !item.completed && item.progress_seconds > 0
       ).length,
-      completed: data.filter((item) => item.completed).length,
+      completed: mergedData.filter((item) => item.completed).length,
     };
 
     return { success: true, stats };
