@@ -256,32 +256,48 @@ export async function getLibraryStats(userEmail: string) {
 
     if (libraryError) throw libraryError;
 
-    // Get progress data
+    // Get ALL progress data (including items not in library yet)
     const { data: progressData } = await supabase
       .from("user_audiobook_progress")
       .select("*")
       .eq("user_id", profile.id);
 
-    // Merge and calculate stats
-    const mergedData = libraryData.map((libItem) => {
-      const progress = progressData?.find(
-        (p) => p.audiobook_id === libItem.audiobook_id
-      );
-      return {
-        ...libItem,
-        progress_seconds:
-          progress?.current_time_seconds || libItem.progress_seconds || 0,
-        completed: progress?.completed || libItem.completed || false,
-      };
-    });
+    // Merge library and progress data
+    const mergedData =
+      libraryData?.map((libItem) => {
+        const progress = progressData?.find(
+          (p) => p.audiobook_id === libItem.audiobook_id
+        );
+        return {
+          ...libItem,
+          progress_seconds:
+            progress?.current_time_seconds || libItem.progress_seconds || 0,
+          completed: progress?.completed || libItem.completed || false,
+        };
+      }) || [];
+
+    // Count items that have progress but aren't in library yet
+    const progressOnlyItems =
+      progressData?.filter(
+        (progress) =>
+          !libraryData?.some(
+            (lib) => lib.audiobook_id === progress.audiobook_id
+          )
+      ) || [];
 
     const stats = {
-      total: mergedData.length,
+      total: mergedData.length + progressOnlyItems.length,
       favorites: mergedData.filter((item) => item.is_favorite).length,
-      inProgress: mergedData.filter(
-        (item) => !item.completed && item.progress_seconds > 0
-      ).length,
-      completed: mergedData.filter((item) => item.completed).length,
+      inProgress:
+        mergedData.filter(
+          (item) => !item.completed && item.progress_seconds > 0
+        ).length +
+        progressOnlyItems.filter(
+          (item) => !item.completed && item.current_time_seconds > 0
+        ).length,
+      completed:
+        mergedData.filter((item) => item.completed).length +
+        progressOnlyItems.filter((item) => item.completed).length,
     };
 
     return { success: true, stats };
