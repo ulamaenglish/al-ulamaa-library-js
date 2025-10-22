@@ -135,7 +135,7 @@ export async function loginUser(
   success: boolean;
   message?: string;
   user?: { username: string; email: string; name: string };
-  session?: any; // Add session to return type
+  session?: any;
 }> {
   try {
     console.log("🔵 Starting login for:", username);
@@ -184,7 +184,7 @@ export async function loginUser(
         email: profile.email,
         name: profile.full_name,
       },
-      session: signInData.session, // ✅ Return the session
+      session: signInData.session,
     };
   } catch (error) {
     console.error("❌ Login error:", error);
@@ -257,7 +257,7 @@ export async function getSavedQuotes(username: string) {
       return [];
     }
 
-    return data.map((quote) => ({
+    return data.map((quote: any) => ({
       id: quote.id,
       title: quote.quote_title,
       text: quote.quote_text,
@@ -363,7 +363,7 @@ export async function getNotes(username: string, quoteTitle?: string) {
       return [];
     }
 
-    return data.map((note) => ({
+    return data.map((note: any) => ({
       id: note.id,
       quote_title: note.quote_title,
       note_text: note.note_text,
@@ -452,7 +452,7 @@ export async function getReadingHistory(username: string, limit: number = 10) {
     }
 
     const uniqueQuotes = new Map();
-    data.forEach((item) => {
+    data.forEach((item: any) => {
       if (!uniqueQuotes.has(item.quote_title)) {
         uniqueQuotes.set(item.quote_title, item.read_at);
       }
@@ -507,7 +507,7 @@ export async function getUserStats(username: string) {
       ]);
 
     const uniqueQuotes = new Set(
-      historyResult.data?.map((item) => item.quote_title) || []
+      historyResult.data?.map((item: any) => item.quote_title) || []
     );
 
     return {
@@ -901,14 +901,14 @@ export async function getMonthlyListeningReport(username: string) {
     const totalListens = monthHistory?.length || 0;
     const totalTime =
       monthHistory?.reduce(
-        (sum, item) => sum + (item.duration_seconds || 0),
+        (sum: number, item: any) => sum + (item.duration_seconds || 0),
         0
       ) || 0;
     const completedListens =
-      monthHistory?.filter((item) => item.completed).length || 0;
+      monthHistory?.filter((item: any) => item.completed).length || 0;
 
     const ziyaratCounts: { [key: string]: number } = {};
-    monthHistory?.forEach((item) => {
+    monthHistory?.forEach((item: any) => {
       ziyaratCounts[item.ziyarat_slug] =
         (ziyaratCounts[item.ziyarat_slug] || 0) + 1;
     });
@@ -1219,7 +1219,7 @@ export async function getAIStats(username: string) {
       .eq("user_id", user.id);
 
     const intentCounts: { [key: string]: number } = {};
-    intents?.forEach((item) => {
+    intents?.forEach((item: any) => {
       if (item.intent_type) {
         intentCounts[item.intent_type] =
           (intentCounts[item.intent_type] || 0) + 1;
@@ -1239,7 +1239,7 @@ export async function getAIStats(username: string) {
       .not("emotion", "is", null);
 
     const emotionCounts: { [key: string]: number } = {};
-    emotions?.forEach((item) => {
+    emotions?.forEach((item: any) => {
       if (item.emotion) {
         emotionCounts[item.emotion] = (emotionCounts[item.emotion] || 0) + 1;
       }

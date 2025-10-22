@@ -38,8 +38,9 @@ export default function LoginPage() {
       const result = await loginUser(loginUsername, loginPassword);
 
       if (result.success && result.user) {
-        // ✅ NEW: Store both user data AND session
+        // Store user data for display
         localStorage.setItem("user", JSON.stringify(result.user));
+        // Session is automatically stored by Supabase
 
         // ✅ Store the session so Supabase knows who's authenticated
         if (result.session) {
