@@ -256,13 +256,11 @@ export async function getLibraryStats(userEmail: string) {
 
     if (libraryError) throw libraryError;
 
-    // Get ALL progress data
+    // Get progress data
     const { data: progressData } = await supabase
       .from("user_audiobook_progress")
       .select("*")
       .eq("user_id", profile.id);
-
-    console.log("📦 Progress Data from DB:", progressData);
 
     // Merge library and progress data
     const mergedData =
@@ -271,20 +269,11 @@ export async function getLibraryStats(userEmail: string) {
           (p) => p.audiobook_id === libItem.audiobook_id
         );
 
-        const merged = {
+        return {
           ...libItem,
-          has_progress: !!progress,
           current_time: progress?.current_time_seconds || 0,
           is_completed: progress?.completed || libItem.completed || false,
         };
-
-        console.log("🔄 Merged item:", {
-          audiobook_id: merged.audiobook_id,
-          current_time: merged.current_time,
-          is_completed: merged.is_completed,
-        });
-
-        return merged;
       }) || [];
 
     const stats = {
@@ -295,8 +284,6 @@ export async function getLibraryStats(userEmail: string) {
       ).length,
       completed: mergedData.filter((item) => item.is_completed).length,
     };
-
-    console.log("📊 Final Library Stats:", stats);
 
     return { success: true, stats };
   } catch (error: any) {
