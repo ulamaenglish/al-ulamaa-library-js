@@ -38,7 +38,16 @@ export default function LoginPage() {
       const result = await loginUser(loginUsername, loginPassword);
 
       if (result.success && result.user) {
+        // ✅ NEW: Store both user data AND session
         localStorage.setItem("user", JSON.stringify(result.user));
+
+        // ✅ Store the session so Supabase knows who's authenticated
+        if (result.session) {
+          localStorage.setItem(
+            "supabase.auth.token",
+            JSON.stringify(result.session)
+          );
+        }
 
         setMessage({
           type: "success",

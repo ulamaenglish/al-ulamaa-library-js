@@ -128,7 +128,15 @@ export async function registerUser(
 }
 
 // Login user using Supabase Auth
-export async function loginUser(username: string, password: string) {
+export async function loginUser(
+  username: string,
+  password: string
+): Promise<{
+  success: boolean;
+  message?: string;
+  user?: { username: string; email: string; name: string };
+  session?: any; // Add session to return type
+}> {
   try {
     console.log("🔵 Starting login for:", username);
 
@@ -176,6 +184,7 @@ export async function loginUser(username: string, password: string) {
         email: profile.email,
         name: profile.full_name,
       },
+      session: signInData.session, // ✅ Return the session
     };
   } catch (error) {
     console.error("❌ Login error:", error);
