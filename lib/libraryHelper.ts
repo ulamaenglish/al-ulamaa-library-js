@@ -262,30 +262,41 @@ export async function getLibraryStats(userEmail: string) {
       .select("*")
       .eq("user_id", profile.id);
 
+    console.log("📦 Progress Data from DB:", progressData);
+
     // Merge library and progress data
     const mergedData =
       libraryData?.map((libItem) => {
         const progress = progressData?.find(
           (p) => p.audiobook_id === libItem.audiobook_id
         );
-        return {
+
+        const merged = {
           ...libItem,
-          current_time_seconds: progress?.current_time_seconds || 0,
-          completed: progress?.completed || libItem.completed || false,
+          has_progress: !!progress,
+          current_time: progress?.current_time_seconds || 0,
+          is_completed: progress?.completed || libItem.completed || false,
         };
+
+        console.log("🔄 Merged item:", {
+          audiobook_id: merged.audiobook_id,
+          current_time: merged.current_time,
+          is_completed: merged.is_completed,
+        });
+
+        return merged;
       }) || [];
 
     const stats = {
       total: mergedData.length,
       favorites: mergedData.filter((item) => item.is_favorite).length,
       inProgress: mergedData.filter(
-        (item) => !item.completed && item.current_time_seconds > 0
+        (item) => !item.is_completed && item.current_time > 0
       ).length,
-      completed: mergedData.filter((item) => item.completed).length,
+      completed: mergedData.filter((item) => item.is_completed).length,
     };
 
-    console.log("📊 Library Stats:", stats);
-    console.log("📚 Merged Data:", mergedData);
+    console.log("📊 Final Library Stats:", stats);
 
     return { success: true, stats };
   } catch (error: any) {
