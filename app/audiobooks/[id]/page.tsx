@@ -112,7 +112,11 @@ export default function AudiobookDetailPage() {
         });
 
         if (!response.ok) {
-          console.error("Failed to save progress");
+          const errorData = await response.json();
+          console.error("Failed to save progress:", response.status, errorData);
+        } else {
+          const successData = await response.json();
+          console.log("Progress saved successfully:", successData);
         }
       } catch (error) {
         console.error("Error saving progress:", error);
